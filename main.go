@@ -70,25 +70,38 @@ func toLocal(dt string) string {
 	return localTime.Format("3:04 PM")
 }
 
-func getPerSuff(period int) string {
-	var perSuf string
-
-	switch period {
-	case 1:
-		perSuf = "st"
-	case 2:
-		perSuf = "nd"
-	case 3:
-		perSuf = "rd"
+func getPeriod(period int, incSuf bool) string {
+	perVal := strconv.Itoa(period)
+	perSuf := ""
+	if period < 4{
+		switch period {
+		case 1:
+			perSuf = "st"
+		case 2:
+			perSuf = "nd"
+		case 3:
+			perSuf = "rd"
+		}
+	} else {
+		if period == 4{
+			perVal = "OT"
+		}
+		if period == 5{
+			perVal = "SO"
+		}
 	}
 
-	return perSuf
+	if incSuf {
+		perVal = perVal + perSuf
+	}
+
+	return perVal
 }
 
 func gameState(game Game) string {
 	var gameClock string
 
-	perSuf := getPerSuff(game.Period)
+	period := getPeriod(game.Period, true)
 
 	gameState := game.State
 
@@ -98,7 +111,7 @@ func gameState(game Game) string {
 		if game.Clock.IsIntermission {
 			gamePre = "Intermission"
 		}
-		gameClock = strconv.Itoa(game.Period) + perSuf + " " + gamePre + " " + game.Clock.TimeRemaining
+		gameClock = period + " " + gamePre + " " + game.Clock.TimeRemaining
 	case "OFF":
 		gameClock = "Final"
 	case "FINAL":
@@ -126,7 +139,11 @@ func gameGoals(game Game) {
 
 		fmt.Println("Scoring Summary:")
 		for _, goal := range game.Goals {
-			scoringTable.Append([]string{goal.Team, goal.Scorer.Name, strconv.Itoa(goal.Period), goal.Time})
+			per := getPeriod(goal.Period, false)
+			scoringTable.Append([]string{goal.Team, goal.Scorer.Name, per, goal.Time})
+			
+			// align the period column to the right
+			scoringTable.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_CENTER	, tablewriter.ALIGN_LEFT})
 		}
 		scoringTable.Render()
 	}
